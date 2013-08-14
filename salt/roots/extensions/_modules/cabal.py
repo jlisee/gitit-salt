@@ -107,14 +107,16 @@ def install(name, version=None, refresh=False, flags=None):
         lines = res.split('\n')
 
         for line in lines:
-            if line.count('Registering '):
+            if line.count('Registering ') and line.count(name):
                 _, name_version = line.split()
-                _, raw_version = name_version.split('-')
+                version_parts = name_version.split('-')
+                raw_version = ''.join(version_parts[1:])
                 version = raw_version[:-3]
 
                 # Now store the results
-                print "DEB",name,version
                 ret['changes'][name] = version
+
+                # Drop out
                 break
     else:
         # Failure gather the results and report them
