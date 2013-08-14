@@ -1,6 +1,9 @@
 # Emacs temp files
 *~
 
+# Vagrant files
+.vagrant/*
+
 *.py[cod]
 
 # C extensions
