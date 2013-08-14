@@ -3,6 +3,7 @@ file_client: local
 file_roots:
   base:
     - /srv/salt/states
+    - /srv/salt/extensions
 
 pillar_roots:
   base:
