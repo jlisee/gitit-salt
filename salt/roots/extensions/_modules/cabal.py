@@ -70,9 +70,9 @@ def version(*names):
     return res
 
 
-def install(name, version=None, refresh=False):
+def install(name, version=None, refresh=False, flags=None):
     """
-    Install the given cabal package
+    Install the given cabal package.
     """
 
     # Make sure we have cabal install
@@ -85,8 +85,41 @@ def install(name, version=None, refresh=False):
     # Now lets install the package
     package = name
 
-    res = __salt__['cmd.run']('cabal install %s' % package)
+    # Form our flag string
+    if flags:
+        flags_str = ' --flags="%s"' % ' '.join(flags)
+    else:
+        flags_str = ''
 
-    # TODO: parse results for success
-    # Already installed output contains "already installed"
-    return res
+    args = (package, flags_str)
+    res = __salt__['cmd.run']('cabal install %s%s' % args)
+
+    # TODO: parse results for success better
+    ret = {
+        'result' : True,
+        'comment' : '',
+        'changes' : {}
+    }
+
+    if res.count('Registering '):
+        # We have had success parse the package version out the return
+        # information, from a string like "Registering bzlib-0.5.0.4..."
+        lines = res.split('\n')
+
+        for line in lines:
+            if line.count('Registering '):
+                _, name_version = line.split()
+                _, raw_version = name_version.split('-')
+                version = raw_version[:-3]
+
+                # Now store the results
+                print "DEB",name,version
+                ret['changes'][name] = version
+                break
+    else:
+        # Failure gather the results and report them
+        ret['result'] = False
+        ret['comment'] = res
+
+
+    return ret
