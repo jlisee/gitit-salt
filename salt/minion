@@ -4,6 +4,7 @@ file_roots:
   base:
     - /srv/salt/states
     - /srv/salt/extensions
+    - /srv/salt/conf
 
 pillar_roots:
   base:
