@@ -3,6 +3,8 @@
 
 # Python Imports
 import logging
+import os
+import shutil
 
 # Project imports
 import salt
@@ -74,6 +76,7 @@ def version(*names, **kwargs):
 
     return ret
 
+_version = version
 
 def install(name, version=None, refresh=False, flags=None, user=None):
     """
@@ -144,5 +147,85 @@ def install(name, version=None, refresh=False, flags=None, user=None):
         # Failure gather the results and report them
         ret['result'] = False
         ret['comment'] = res['stderr']
+
+    return ret
+
+def uninstall(name, version=None, user=None):
+    # Make sure we have cabal install
+    _check_cabal_bin()
+
+    # Make sure we have proper return
+    ret = {
+        'result' : True,
+        'comment' : '',
+        'changes' : {}
+    }
+
+    # Get the GHC version
+    res = __salt__['cmd.run_all']('ghc --numeric-version', runas=user)
+
+    ghc_version = res['stdout']
+
+    if version:
+        # User specified a version so just uninstall that one
+        versions_to_remove = [version]
+    else:
+        # User gave no version so look up all versions and remove them
+        installed = _version(name, user=user)
+
+        if name in installed:
+            versions_to_remove = installed[name]
+        else:
+            ret['comment'] = 'Package %s not installed' % name
+            ret['result'] = False
+
+            return ret
+
+    # Setup our changes dict to store what havoc we are about to wreck on cabal
+    ret['changes'] = {
+        'unregistered' : [],
+        'removed' : []
+    }
+
+    # Remove each version of the package
+    for cur_version in versions_to_remove:
+        # Un-register the package
+        name_version = '%s-%s' % (name, cur_version)
+        args = (ghc_version, name_version)
+
+        res = __salt__['cmd.run_all']('ghc-pkg-%s unregister %s' % args,
+                                      runas=user)
+
+        # Handle errors
+        if 0 != res['retcode']:
+            ret['result'] = False
+            ret['comment'] = 'ghc-unregister failed: %s' % res['stderr']
+
+            return ret
+
+        # Record removal
+        ret['changes']['unregistered'].append('ghc-unregister %s' % name_version)
+
+        # Remove library files
+        if user:
+            user_dir = os.path.expanduser('~' + user)
+        else:
+            user_dir = '/root'
+
+        pkg_dir = os.path.join(user_dir, '.cabal', 'lib', name_version)
+        version_dir = os.path.join(pkg_dir, 'ghc-%s' % ghc_version)
+
+        shutil.rmtree(version_dir)
+
+        ret['changes']['removed'].append('removed directory: ' + version_dir)
+
+        # Clear out possibly empty directory
+        if len(os.listdir(pkg_dir)) == 0:
+            shutil.rmtree(pkg_dir)
+
+            ret['changes']['removed'].append('removed directory: ' + pkg_dir)
+
+        # We are done
+        ret['comment'] += 'Un-installed %s. ' % name_version
 
     return ret
