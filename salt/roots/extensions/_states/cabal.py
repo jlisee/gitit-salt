@@ -41,6 +41,20 @@ def installed(name, version=None, refresh=False, flags=None, user=None):
         'changes' : {},
         }
 
+    # Determine if we need to do a refresh of the index
+    rtag = __gen_rtag()
+    do_refresh = salt.utils.is_true(refresh) or os.path.isfile(rtag)
+
+    # Refresh the db as needed
+    if do_refresh:
+        res = __salt__['cabal.refresh_db'](user=user)
+
+        if 0 != res['retcode']:
+            ret['result'] = False
+            ret['comment'] = 'update failed: %s' % res['stderr']
+
+            return ret
+
     # Check if we have the package installed and exit if we do
     pkg_info = __salt__['cabal.version'](name, user=user)
     installed_versions = pkg_info.get(name, None)
@@ -58,14 +72,9 @@ def installed(name, version=None, refresh=False, flags=None, user=None):
         ret['comment'] = msg
         return ret
 
-    # Determine if we need to do a refresh of the index
-    rtag = __gen_rtag()
-    do_refresh = salt.utils.is_true(refresh) or os.path.isfile(rtag)
-
     # Install our package
     res = __salt__['cabal.install'](name,
                                     version=version,
-                                    refresh=do_refresh,
                                     flags=flags,
                                     user=user)
 
