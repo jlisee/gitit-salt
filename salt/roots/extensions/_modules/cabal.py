@@ -67,12 +67,12 @@ def version(*names, **kwargs):
                     # Determine if the package is installed or not
                     if value == '[ Not installed ]':
 
-                        input = None
+                        package_name = None
                     else:
-                        input = value
+                        package_name = [i.strip() for i in value.split(',')]
 
                     # Store our output
-                    ret[name] = [i.strip() for i in input.split(',')]
+                    ret[name] = package_name
 
     return ret
 
