@@ -15,6 +15,7 @@ gitit-cabal:
   cabal:
     - installed
     - name: gitit
+    - version: 0.10.3.1
     - user: gitit
     - require:
         - cabal: pandoc
