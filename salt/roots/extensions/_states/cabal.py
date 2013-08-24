@@ -95,6 +95,58 @@ def installed(name, version=None, refresh=False, flags=None, user=None):
 
     return ret
 
+def absent(name, version=None, user=None):
+    """
+    Make sure the particular package is no longer installed.
+    """
+
+    # Setup default return value
+    ret = {
+        'name' : name,
+        'result' : True,
+        'comment' : '',
+        'changes' : {},
+        }
+
+    # Look up what versions of the package are installed
+    installed = __salt__['cabal.version'](name, user=user)
+
+    versions_to_remove = []
+
+    # Look up installed versions
+    if version:
+        # User specified a version so just uninstall that one
+        versions_to_remove = [version]
+    else:
+        # No version specified remove all found packages
+        versions_to_remove = installed.get(name, [])
+
+    # Bail out if we don't have any packages to remove
+    if len(versions_to_remove) == 0:
+        if len(installed) == 0:
+            ret['comment'] = 'Package %s not installed' % name
+        elif version:
+            ret['comment'] = 'Package %s-%s not installed' % (name, version)
+        ret['result'] = True
+
+        return ret
+
+    # Remove all the given versions
+    for cur_version in versions_to_remove:
+        res = __salt__['cabal.uninstall'](name, version=cur_version, user=user)
+
+        # Inform the user of the changes we have made to there system
+        ret['comment'] += res['comment'] + '\n'
+
+        for key, value in res['changes'].iteritems():
+            ret['changes'].setdefault(key, []).extend(value)
+
+        # Bail out with an error if we fail to uninstall a package
+        if not res['result']:
+            ret['result'] = False
+            return ret
+
+    return ret
 
 def mod_init(low):
     """
