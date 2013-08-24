@@ -10,8 +10,8 @@
        Allow from all
     </Proxy>
 
-    ProxyPassReverse /    http://127.0.0.1:5001
-    RewriteRule ^(.*) http://127.0.0.1:5001$1 [P]
+    ProxyPassReverse /    http://127.0.0.1:{{ pillar['gitit']['port'] }}
+    RewriteRule ^(.*) http://127.0.0.1:{{ pillar['gitit']['port'] }}$1 [P]
 
     ErrorLog ${APACHE_LOG_DIR}/error.log
     LogLevel warn

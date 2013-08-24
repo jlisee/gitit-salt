@@ -20,6 +20,7 @@
     - user: root
     - group: root
     - mode: 644
+    - template: jinja
 
 # Make sure the default site is not present
 {{ apache_settings['sites-enabled'] }}/000-default:
