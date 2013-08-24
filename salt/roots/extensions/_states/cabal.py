@@ -43,10 +43,18 @@ def installed(name, version=None, refresh=False, flags=None, user=None):
 
     # Check if we have the package installed and exit if we do
     pkg_info = __salt__['cabal.version'](name, user=user)
-    installed_version = pkg_info.get(name, None)
+    installed_versions = pkg_info.get(name, None)
 
-    if installed_version:
-        msg = 'Package version: %s already installed' % installed_version
+    package_installed = False
+
+    if (version and installed_versions) and (version in installed_versions):
+        package_installed = True
+    elif installed_versions and not version:
+        package_installed = True
+
+    if package_installed:
+        version_str = ', '.join(installed_versions)
+        msg = 'Package version(s): %s already installed' % version_str
         ret['comment'] = msg
         return ret
 

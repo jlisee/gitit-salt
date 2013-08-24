@@ -70,7 +70,7 @@ def version(*names, **kwargs):
                         input = value
 
                     # Store our output
-                    ret[name] = input
+                    ret[name] = [i.strip() for i in input.split(',')]
 
     return ret
 
@@ -110,7 +110,13 @@ def install(name, version=None, refresh=False, flags=None, user=None):
     else:
         flags_str = ''
 
-    args = (package, flags_str)
+    # Form the package string with arguments first
+    if version:
+        package_str = '%s-%s' % (name, version)
+    else:
+        package_str = name
+
+    args = (package_str, flags_str)
     res = __salt__['cmd.run_all']('cabal install %s%s' % args, runas=user)
 
     output = res['stdout']
@@ -123,7 +129,7 @@ def install(name, version=None, refresh=False, flags=None, user=None):
             lines = output.split('\n')
 
             for line in lines:
-                if line.count('Registering ') and line.count(name + '-'):
+                if line.count('Registering ') and line.count(package_str):
                     _, name_version = line.split()
                     version_parts = name_version.split('-')
                     raw_version = ''.join(version_parts[1:])
