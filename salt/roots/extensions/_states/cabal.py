@@ -18,7 +18,7 @@ def __gen_rtag():
     return os.path.join(__opts__['cachedir'], 'cabal_refresh')
 
 
-def installed(name, version=None, refresh=False, flags=None):
+def installed(name, version=None, refresh=False, flags=None, user=None):
     """
     Make sure the desired cabal package is installed.
 
@@ -42,7 +42,7 @@ def installed(name, version=None, refresh=False, flags=None):
         }
 
     # Check if we have the package installed and exit if we do
-    pkg_info = __salt__['cabal.version'](name)
+    pkg_info = __salt__['cabal.version'](name, user=user)
     installed_version = pkg_info.get(name, None)
 
     if installed_version:
@@ -52,14 +52,14 @@ def installed(name, version=None, refresh=False, flags=None):
 
     # Determine if we need to do a refresh of the index
     rtag = __gen_rtag()
-    #do_refresh = salt.utils.is_true(refresh) or os.path.isfile(rtag)
-    do_refresh = False
+    do_refresh = salt.utils.is_true(refresh) or os.path.isfile(rtag)
 
     # Install our package
     res = __salt__['cabal.install'](name,
                                     version=version,
                                     refresh=do_refresh,
-                                    flags=flags)
+                                    flags=flags,
+                                    user=user)
 
     if res['result']:
         # Report results

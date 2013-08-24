@@ -20,30 +20,35 @@ def _check_cabal_bin():
         raise CommandNotFoundError('Could not find a `cabal` binary')
 
 
-def refresh_db():
+def refresh_db(user=None):
     """
     Downloads the latest hackage dependency information.
     """
 
     _check_cabal_bin()
 
-    res = __salt__['cmd.run']('cabal update')
-
-    return res
+    return __salt__['cmd.run_all']('cabal update', runas=user)
 
 
-def version(*names):
+def version(*names, **kwargs):
     """
     Returns dict matching package to installed version, None for not installed.
     """
 
+    # Make sure we have cabal install
     _check_cabal_bin()
 
-    res = {}
+    # Parse out the user argument
+    user = kwargs.get('user', None)
+
+    ret = {}
 
     for name in names:
         # Get the info about the package
-        output = __salt__['cmd.run']('cabal info %s' % name)
+        res = __salt__['cmd.run_all']('cabal info %s' % name, runas=user)
+
+        # Check results
+        output = res['stdout']
 
         # Parse out the installed line
         lines = [l.strip() for l in output.split('\n')]
@@ -65,12 +70,12 @@ def version(*names):
                         input = value
 
                     # Store our output
-                    res[name] = input
+                    ret[name] = input
 
-    return res
+    return ret
 
 
-def install(name, version=None, refresh=False, flags=None):
+def install(name, version=None, refresh=False, flags=None, user=None):
     """
     Install the given cabal package.
     """
@@ -78,9 +83,23 @@ def install(name, version=None, refresh=False, flags=None):
     # Make sure we have cabal install
     _check_cabal_bin()
 
+    # Make sure we have proper return
+    ret = {
+        'result' : True,
+        'comment' : '',
+        'changes' : {}
+    }
+
     # Refresh as needed
     if salt.utils.is_true(refresh):
-        refresh_db()
+        res = refresh_db(user=user)
+
+        # Bail out if there was an error
+        if 0 != res['retcode']:
+            ret['result'] = False
+            ret['comment'] = 'update failed: %s' % res['stderr']
+
+            return ret
 
     # Now lets install the package
     package = name
@@ -92,36 +111,32 @@ def install(name, version=None, refresh=False, flags=None):
         flags_str = ''
 
     args = (package, flags_str)
-    res = __salt__['cmd.run']('cabal install %s%s' % args)
+    res = __salt__['cmd.run_all']('cabal install %s%s' % args, runas=user)
 
-    # TODO: parse results for success better
-    ret = {
-        'result' : True,
-        'comment' : '',
-        'changes' : {}
-    }
+    output = res['stdout']
 
-    if res.count('Registering '):
-        # We have had success parse the package version out the return
-        # information, from a string like "Registering bzlib-0.5.0.4..."
-        lines = res.split('\n')
+    # Parse results to determine what we have done
+    if 0 == res['retcode']:
+        if output.count('Registering '):
+            # We have had success parse the package version out the return
+            # information, from a string like "Registering bzlib-0.5.0.4..."
+            lines = output.split('\n')
 
-        for line in lines:
-            if line.count('Registering ') and line.count(name):
-                _, name_version = line.split()
-                version_parts = name_version.split('-')
-                raw_version = ''.join(version_parts[1:])
-                version = raw_version[:-3]
+            for line in lines:
+                if line.count('Registering ') and line.count(name + '-'):
+                    _, name_version = line.split()
+                    version_parts = name_version.split('-')
+                    raw_version = ''.join(version_parts[1:])
+                    version = raw_version[:-3]
 
-                # Now store the results
-                ret['changes'][name] = version
+                    # Now store the results
+                    ret['changes'][name] = version
 
-                # Drop out
-                break
+                    # Drop out
+                    break
     else:
         # Failure gather the results and report them
         ret['result'] = False
-        ret['comment'] = res
-
+        ret['comment'] = res['stderr']
 
     return ret
