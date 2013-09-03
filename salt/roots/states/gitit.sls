@@ -7,9 +7,10 @@ pandoc:
     - installed
     - user: gitit
     - flags:
-        - highlighting
+      - highlighting
     - require:
-        - pkg: {{ pillar['cabal-install'] }}
+      - pkg: {{ pillar['cabal-install'] }}
+      - user: gitit
 
 gitit-cabal:
   cabal:
@@ -18,7 +19,8 @@ gitit-cabal:
     - version: 0.10.3.1
     - user: gitit
     - require:
-        - cabal: pandoc
+      - cabal: pandoc
+      - user: gitit
 
 # Make sure we have git installed
 git:
@@ -66,6 +68,7 @@ gitit_repo:
 gitit_conf_file:
   file.managed:
     - name: {{ gitit['root_dir'] }}/{{ gitit['conf_file'] }}
+    - source: salt://gitit/wiki.conf
     - makedirs: True
     - user: gitit
     - group: gitit
@@ -84,7 +87,7 @@ init_repo:
     - user: gitit
     - group: gitit
     - require:
-      - file: gitit_dir
+      - file: gitit_repo
       - pkg: git
       - user: gitit
 
