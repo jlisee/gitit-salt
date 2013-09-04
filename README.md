@@ -16,25 +16,24 @@ salt to install and configure gitit + apache.
 
  1. Install Salt:
 
-     wget -O - http://bootstrap.saltstack.org | sudo sh
+        wget -O - http://bootstrap.saltstack.org | sudo sh
 
  2. Grab the code:
 
-     git clone https://github.com/jlisee/gitit-salt
+        git clone https://github.com/jlisee/gitit-salt
 
  3. Install our salt minion configuration:
 
-     sudo cp gitit-salt/salt/minion /etc/salt/minion
+        sudo cp gitit-salt/salt/minion /etc/salt/minion
 
  4. Install the salt state files:
 
-     sudo rm -rf /srv/salt
-     sudo mkdir /srv/salt
-     sudo cp -r gitit-salt/salt/roots /srv/salt
+        sudo mkdir -p /srv
+        sudo cp -r gitit-salt/salt/roots /srv/salt
 
  5. Instruct salt to configuration our server:
 
-     sudo salt-call state.highstate
+        sudo salt-call state.highstate
 
  6. See you need wiki at: http://youserver.com/
 
@@ -47,7 +46,7 @@ manage a local virtual machine for you.  The Vagrantfile in this
 repository creates an Ubuntu 12.04 64 bit VM and uses our salt files to
 setup the machine.
 
- 1. Install [Vagrant](http://vagrantup)
+ 1. Install [Vagrant](http://www.vagrantup.com/)
  2. Install Salty Vagrant (``vagrant plugin install vagrant-salt``)
  3. Run ``vagrant up``
  4. Wait several minutes for everything to compile (more than 10, cabal
