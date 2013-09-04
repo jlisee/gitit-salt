@@ -6,6 +6,7 @@ pandoc:
   cabal:
     - installed
     - user: gitit
+    - version: 1.11.1
     - flags:
       - highlighting
     - require:
