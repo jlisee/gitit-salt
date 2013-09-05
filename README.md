@@ -3,10 +3,11 @@ Gitit Salt
 
 Automated install and setup of a Gitit wiki.
 
-Gitit Salt installs the VCS backed [Gitit](http://gitit.net/) on Ubuntu
-using the Apache web server as a proxy using
+Gitit Salt installs the VCS backed [Gitit](http://gitit.net/)
+wiki on Ubuntu using the Apache web server as a proxy.
 [SaltStack](http://saltstack.org/) and
-[Cabal](http://www.haskell.org/cabal/).
+[Cabal](http://www.haskell.org/cabal/) are used to install and
+configure the needed software.
 
 Quick Start
 ============
@@ -57,17 +58,17 @@ setup the machine.
 What exactly is this doing?
 ============================
 
-Best to just lay it out step by step:
+Best to just lay out what is done step by step:
 
- 1. Install the following packages: ghc (haskell compiler), apache (web
- server), cabal-install (Haskell's almost package manager).
- 2. Use cabal to install gitit
- 3. Setup gitit in ``/srv/gitit`` with the wiki in the git repository in
- ``/srv/gitit/wikidata``.
+ 1. Install ghc (haskell compiler), apache (web server), cabal-install
+ (Haskell's almost package manager) with apt-get.
+ 2. Use cabal to install gitit.
+ 3. Setup gitit in ``/srv/gitit`` with the wiki using the git repository
+ in ``/srv/gitit/wikidata``.
  4. Create a gitit upstart service (``/etc/init/gitit``) serving on port
  5001.
- 4. Configure apache to forward are request to the local git server
- (``/etc/apache2/sites-enabled/gitit``) proxy all request.
+ 4. Configure apache to forward all requests to the local gitit server
+ (``/etc/apache2/sites-enabled/gitit``).
 
 
 How does all this work?
